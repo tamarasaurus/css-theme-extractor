@@ -45,10 +45,53 @@ var getColorValues = function(values) {
   return colorValues;
 };
 
+var parseAttributes = function(attributes) {
+  var parsedAttributes = {};
+  // if attribute type is rule
+  _.each(attributes, function(attr) {
+    if (attr.type === "attr") {
+      parsedAttributes[attr.name] = attr.value;
+    }
+  });
+  return parsedAttributes;
+};
+
+var parseChildren = function(children) {
+  var parsedChildren = {};
+
+  if (_.isObject(children)) {
+
+    _.each(children, function(child) {
+      if (child.type === "rule") {
+        var parsedChild = {
+          attributes: {}
+        };
+        parsedChild.attributes = parseAttributes(child.value);
+        parsedChildren[child.name] = parsedChild;
+      }
+    });
+  }
+  return parsedChildren;
+};
+
 var indexify = function(rules) {
-  var collection = {};
+  var collection = {
+    children: {}
+  };
   _.each(rules, function(rule, index) {
-    collection[index] = rule;
+    var existingRule = collection.children[rule.name];
+    var parsedAttributes = parseAttributes(rule.value);
+    var parsedChildren = parseChildren(rule.value);
+
+    if (!existingRule) {
+      collection.children[rule.name] = {
+        attributes: parsedAttributes,
+        children: parsedChildren
+      };
+    } else {
+      existingRule.attributes = _.extend(existingRule.attributes, parsedAttributes);
+      existingRule.children = _.extend(existingRule.children, parsedChildren);
+    }
   });
   return collection;
 };
@@ -94,7 +137,7 @@ var parseRules = function(rules) {
     }
   });
 
-  return indexify(rulesWithColors)
+  return indexify(rulesWithColors);
 };
 
 
@@ -116,6 +159,7 @@ fs.readFile("style.css", "utf-8", function(err, contents) {
 
 
   var parsedCSS = parseRules(extractedCSS);
-  console.log(parsedCSS);
+  outputCSS(parsedCSS);
+  // console.log(parsedCSS);
 
 });
