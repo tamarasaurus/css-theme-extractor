@@ -5,27 +5,6 @@
   display: inline-block;
 }
 
-.grid-content {
-  padding: 0px;
-  margin: 0px; 
-     background: green;
-     background: #fff;
-}
-
-.grid-content {
-     color: red;
-     background: #ff99ff;
-}
-
-.grid-content {
-     border-color: yellow;
-     background: #ff33ff;
-}
-.grid-content {
-     background: blue;
-     background: #aa33aa;
-}
-
 .flag16.flag-ad {background-position: -16px 0}
 .flag16.flag-ae {background-position: -32px 0}
 .flag16.flag-af {background-position: -48px 0}

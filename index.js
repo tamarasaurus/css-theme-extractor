@@ -11,15 +11,47 @@ var containsRgba = function(str) {
   return str.indexOf("rgba") > -1;
 };
 
-var outputCSS = function(selectors) {
-  var themeString = cssjson.toCSS(selectors);
-
-  fs.writeFile("output/theme1.css", themeString, function(err) {
+var outputCSS = function(cssString) {
+  // var themeString = convertToCSS(selectors);
+  fs.writeFile("output/theme1.css", cssString, function(err) {
     if (err) {
       return console.log(err);
     }
-    console.log("Theme was saved");
+    console.log("Theme was saved at output/theme1.css");
   });
+};
+
+var makeAttributeString = function(name, value) {
+  return "\t" + name + ": " + value + ";\n";
+};
+
+var makeBlockString = function(rule) {
+  var blockString = "";
+  blockString += "\t" + rule.name + " {\n";
+  // if value is an array
+  _.each(rule.value, function(val) {
+    blockString += makeAttributeString(val.name, val.value);
+  });
+
+  blockString += "\t" + "}\n";
+  return blockString;
+};
+
+var convertToCSS = function(rules) {
+  // console.log(node);
+  var cssString = "";
+  _.each(rules, function(rule) {
+    if (rule.hasChildren) {
+      cssString += "\t" + rule.name + " {\n";
+      _.each(rule.value, function(childRule) {
+        cssString += makeBlockString(childRule);
+      });
+      cssString += "\t" + "}\n";
+    } else {
+      cssString += makeBlockString(rule);
+    }
+  });
+  return cssString;
 };
 
 
@@ -74,6 +106,7 @@ var parseChildren = function(children) {
   return parsedChildren;
 };
 
+// Maybe drop this because the rules need to be in the same order
 var indexify = function(rules) {
   var collection = {
     children: {}
@@ -122,7 +155,9 @@ var parseRules = function(rules) {
       if (!_.isEmpty(childRulesWithColors)) {
         rulesWithColors.push({
           name: rule.name,
-          value: childRulesWithColors
+          value: childRulesWithColors,
+          type: "rule",
+          hasChildren: true
         });
       }
 
@@ -137,7 +172,7 @@ var parseRules = function(rules) {
     }
   });
 
-  return indexify(rulesWithColors);
+  return rulesWithColors;
 };
 
 
@@ -157,9 +192,7 @@ fs.readFile("style.css", "utf-8", function(err, contents) {
     stripComments: true
   });
 
-
   var parsedCSS = parseRules(extractedCSS);
-  outputCSS(parsedCSS);
-  // console.log(parsedCSS);
-
+  var convertedCSS = convertToCSS(parsedCSS);
+  outputCSS(convertedCSS);
 });
