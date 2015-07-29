@@ -1,5 +1,7 @@
+"use strict";
+
+/* global require */
 var cssjson = require("cssjson");
-var underscore = require("underscore");
 var fs = require("fs");
 var _ = require("underscore");
 var isColor = require("is-color");
@@ -7,8 +9,13 @@ var colors = require("colors");
 var format = require("cssbeautify");
 
 var containsRgba = function(str) {
-  if (!typeof str === String) return false;
+  if (!_.isString(str)) return false;
   return str.indexOf("rgba") > -1;
+};
+
+var isBorderStyle = function(str) {
+  if (!_.isString(str)) return false;
+  return str.indexOf("border") > -1;
 };
 
 var outputCSS = function(cssString) {
@@ -106,28 +113,28 @@ var parseChildren = function(children) {
   return parsedChildren;
 };
 
-// Maybe drop this because the rules need to be in the same order
-var indexify = function(rules) {
-  var collection = {
-    children: {}
-  };
-  _.each(rules, function(rule, index) {
-    var existingRule = collection.children[rule.name];
-    var parsedAttributes = parseAttributes(rule.value);
-    var parsedChildren = parseChildren(rule.value);
+// This converts the css json rules into a format that cssjson expects for toCSS
+// var indexify = function(rules) {
+//   var collection = {
+//     children: {}
+//   };
+//   _.each(rules, function(rule, index) {
+//     var existingRule = collection.children[rule.name];
+//     var parsedAttributes = parseAttributes(rule.value);
+//     var parsedChildren = parseChildren(rule.value);
 
-    if (!existingRule) {
-      collection.children[rule.name] = {
-        attributes: parsedAttributes,
-        children: parsedChildren
-      };
-    } else {
-      existingRule.attributes = _.extend(existingRule.attributes, parsedAttributes);
-      existingRule.children = _.extend(existingRule.children, parsedChildren);
-    }
-  });
-  return collection;
-};
+//     if (!existingRule) {
+//       collection.children[rule.name] = {
+//         attributes: parsedAttributes,
+//         children: parsedChildren
+//       };
+//     } else {
+//       existingRule.attributes = _.extend(existingRule.attributes, parsedAttributes);
+//       existingRule.children = _.extend(existingRule.children, parsedChildren);
+//     }
+//   });
+//   return collection;
+// };
 
 
 var filteredByColor = function(rules) {
@@ -176,16 +183,13 @@ var parseRules = function(rules) {
 };
 
 
-
 fs.readFile("style.css", "utf-8", function(err, contents) {
-  // Beautify css first
+  // Beautify css first because cssjson doesn't read things very well..
   var formattedCSS = format(contents, {
     indent: "  ",
     openbrace: "separate-line",
     autosemicolon: true
   });
-
-  // combine media queries first
 
   var extractedCSS = cssjson.toJSON(formattedCSS, {
     ordered: true,
